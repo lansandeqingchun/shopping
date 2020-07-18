@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div style="width: 300px; height: 200px; background: skyblue; margin: 100px auto;">
+        <div style="width: 300px; height: 30px; background: pink;line-height: 30px;">贾不假商城(请登录)</div>
+        <form action="" style="display: flex; justify-content:center; align-items:center;flex-wrap:wrap">
+            <p style="width: 70px;">用户名：</p><input type="text" style="width: 200px;" name="username"><br>
+            <p style="width: 70px;">密码：</p><input type="text" style="width: 200px;" name="pwd"><br>
+            <input type="submit" value="登录" style="margin-right: 50px;">
+            <input type="button" value="注册(功能开发中)">
+        </form>
+    </div>
+    <script src="./jquery.js"></script>
+    <script>
+        $("form").submit(function(e){
+            e.preventDefault()
+            let username = $("input[name='username']").val()
+            let pwd = $("input[name='pwd']").val()
+            $.get("./php/login.php",{username,pwd},res=>{
+                if(res.meta.status == 200){
+                    alert(res.meta.msg)
+                    let userid = res.data.id
+                    let token = res.data.token
+                    localStorage.setItem("username",username)
+                    localStorage.setItem("userid",userid)
+                    localStorage.setItem("token",token)
+                    location.href = "./index.html"
+                }else{
+                    alert(res.meta.msg)
+                }
+            },'json')
+        })
+    </script>
+</body>
+</html>
