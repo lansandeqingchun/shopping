@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>商城</title>
+    <meta charset="UTF-8">
+</head>
+<style>
+table {
+	border-collapse: collapse; position: relative; float: none; width: 990px; margin: auto;
+}
+table tr {
+	border: 1px solid rgb(204, 204, 204); padding: 5px 0px;
+}
+table th {
+	background-color: rgb(243, 243, 243); color: rgb(102, 102, 102); font-size: 12px; line-height: 32px; height: 32px; width: 75px;
+}
+table td {text-align: center; font-size: 12px; background-color: rgb(243, 243, 243);}
+table td button {width: 25px; height: 25px; background-color: rgb(255, 255, 255); outline: none; cursor: pointer;position: relative; border: 1px solid rgb(204, 204, 204);}
+table td div input { width: 50px; height: 21px; border-top: 1px solid rgb(204, 204, 204); border-right: none; border-bottom: 1px solid rgb(204, 204, 204); border-left: none; border-image: initial; outline: none; position: relative; text-align: center; }
+</style>
+<body>
+	<table>
+		<tr>
+			<th><input type="checkbox">全选</th>
+			<th></th>
+			<th>商品</th>
+			<th></th>
+			<th>单价</th>
+			<th>数量</th>
+			<th>小计</th>
+			<th>操作</th>
+		</tr>
+		
+	</table>
+    <div class="img" style="text-align: center;"></div>
+    
+    <script src="./jquery.js"></script>
+    <script>
+        $(function(){
+            //获取用户信息
+            let user_id = localStorage.getItem("userid")
+            if(!user_id){
+                alert("请先登录")
+                location.href = "./login.html"
+            }
+
+            //设置定时器
+            let t
+
+            //loading图片
+            $(".img").html(`<img src="./img/loading.gif">`)
+
+            //页面加载请求
+            $.get("./php/cart.php",{user_id},res=>{
+                
+                //显示数据库数据
+                $.each(res.data,(inedx,item)=>{
+                    html =``
+                    html = `<tr goods_id="${item.goods_id}">
+                                <td><input type="checkbox" style="margin-left: -15px;"></td>
+                                <td>
+                                    <img src="${item.goods_img}"  style="width: 80px;height: 80px;">
+                                </td>
+                                <td>
+                                    ${item.goods_title}
+                                </td>
+                                <td>1L*12</td>
+                                <td>${item.goods_price}</td>
+                                <td>
+                                    <div style="position: relative;">
+                                        <button class="del">-</button>
+                                        <input value="${item.buy_num}" class="num" />
+                                        <button class="add">+</button>
+                                    </div>
+                                </td>
+                                <td>${item.goods_price * item.buy_num}</td>
+                                <td><a>删除</a></td>
+                            </tr>`
+                    $("table").append(html)
+                    
+                })
+                // console.log(res.data)
+                if(!res.data){
+                    html = `<p style="margin:150px;color:gray;text-align: center;font-size:30px;" >购物车空空如也，点我快去看看商品吧</p>`
+                    $("body").append(html)
+                    $(".img").html("")
+                }else{
+                    html = `<p style="margin-top:40px;margin-right:180px;color:skyblue;text-align: center;font-size:18px; float:right;" >返回商城</p>`
+                    $("body").append(html)
+                    $(".img").html("")
+                }
+            },"json")
+
+            //空购物车点击进入商品页面
+            $("body").on("click","p",function(){
+                location.href = "./index.html"
+            })
+
+            //商品数量添加事件
+            $("tbody").on("click",".add",function(){
+                clearTimeout(t)
+                t = setTimeout(() => {
+                    let goods_id= $(this).parents("tr").attr("goods_id")
+                    let buy_num = parseInt($(this).prev().val()) + 1
+                    $.get("./php/update.php",{user_id,goods_id,buy_num},res=>{
+                        if(res.meta.status == 200){
+                            $(this).prev().val(buy_num)
+                            $(this).parent().parent().next().html(buy_num * parseInt($(this).parent().parent().prev().html())) 
+                        }else{
+                            alert(res.meta.msg)
+                        }
+                    },"json")
+                }, 1000)
+            })
+
+            //商品数量减少事件
+            $("tbody").on("click",".del",function(){
+                clearTimeout(t)
+                t = setTimeout(() =>{
+                    let goods_id= $(this).parents("tr").attr("goods_id")
+                    let buy_num = parseInt($(this).next().val()) - 1
+                    if(buy_num < 1) buy_num = 1
+                    $.get("./php/update.php",{user_id,goods_id,buy_num},res=>{
+                        if(res.meta.status == 200){
+                            $(this).next().val(buy_num)
+                            $(this).parent().parent().next().html(buy_num * parseInt($(this).parent().parent().prev().html())) 
+                        }else{
+                            alert(res.meta.msg)
+                        }
+                    },"json")
+                },1000)
+            })
+
+            //商品数量输入事件
+            $("tbody").on("keyup",".num",function(){
+                clearTimeout(t)
+                t = setTimeout(() =>{
+                    let goods_id= $(this).parents("tr").attr("goods_id")
+                    let val = $(this).val()
+                    let buy_num = parseInt(val.replace(/[^0-9]/g, ''))
+                    if(isNaN(buy_num) || buy_num < 1 || buy_num == '') buy_num = 1
+                    $.get("./php/update.php",{user_id,goods_id,buy_num},res=>{
+                        if(res.meta.status == 200){
+                            $(this).val(buy_num)
+                            $(this).parent().parent().next().html(buy_num * parseInt($(this).parent().parent().prev().html())) 
+                        }else{
+                            buy_num = 1
+                            $(this).val(buy_num)
+                            $(this).parent().parent().next().html(buy_num * parseInt($(this).parent().parent().prev().html())) 
+                            alert(res.meta.msg)
+                        }
+                    },"json")
+                },1000)
+            })
+
+            //商品删除事件
+            $("tbody").on("click","a",function(){
+                let goods_id= $(this).parents("tr").attr("goods_id")
+                $.get("./php/cartdel.php",{goods_id,user_id},res=>{
+                    if(res.meta.status == 200){
+                        alert("删除成功")
+                        $(this).parent().parent().remove()
+                    }else{
+                        alert(res.meta.msg)
+                    }
+                    if(!$("tbody td")[0]){
+                        $("p").remove()
+                        html = `<p style="margin:150px;color:gray;text-align: center;font-size:30px;" >购物车空空如也，点我快去看看商品吧</p>`
+                        $("body").append(html)
+                    }
+                },"json")
+            })
+
+            //商品全选点击事件
+            $("th input").click(function(){
+                $("td input[type='checkbox']").each((index,item)=>{
+                    $(item).prop("checked",$("th input").prop("checked"))
+                })
+            })
+
+            //商品单击勾选改变全选框
+            $("table").on("click","td input[type='checkbox']",function(){
+                let rs = true
+                $("td input[type='checkbox']").each((inedx,item)=>{
+                    if(!$(item).prop("checked")) rs = false
+                    $("th input").prop("checked",rs)
+                })
+            })
+        })
+    </script>
+</body>
+</html>

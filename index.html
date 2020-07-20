@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>商品列表</title>
+    <meta charset="UTF-8">
+</head>
+<style>
+.goods {
+	width: 290px; height: 390px; margin-left: 10px; margin-bottom: 20px; background-color: white; position: relative; float: left;
+}
+.goods > .content  {text-align: center; height: 330px; width: 100%; position: relative;}
+.goods > .content img {margin-top: 20px; transition: all 1s ease 0s; width: 230px; height: 200px;}
+.goods {
+	width: 290px; height: 390px; margin-left: 10px; margin-bottom: 20px; background-color: white; position: relative; float: left;
+}
+.goods > .content  {text-align: center; height: 330px; width: 100%; position: relative;}
+.goods > .content img {margin-top: 20px; transition: all 1s ease 0s; width: 230px; height: 200px;}
+.goods > .content p {font-size: 14px; width: 230px; overflow: hidden; height: 40px; left: 0px; right: 0px; margin: auto; position: absolute; line-height: 22px; bottom: 10px;}
+.goods > .buy {border: 2px solid rgb(224, 18, 34); height: 58px; width: 286px; bottom: 0px; position: absolute;}
+.goods > .buy .price1 {font-size: 24px; color: rgb(224, 18, 34); margin-left: 5px; line-height: 35px;}
+.goods > .buy .price2 {font-size: 14px; text-decoration: line-through; margin-left: 5px;}
+.goods > .buy .o1 {font-size: 16px; margin-left: 10px; line-height: 10px;}
+.goods > .buy .o2 {display: inline-block; width: 100px; height: 10px; border: 1px solid rgb(224, 18, 34); margin-left: 20px; margin-top: 5px; position: absolute;}
+.goods > .buy .o2 > span {position: absolute; height: 10px; top: 0px; bottom: 0px; background-color: rgb(224, 18, 34);}
+.goods > .buy .addCart {width: 87px; height: 58px; position: absolute; right: 0px; top: 0px; color: white; font-size: 16px; text-align: center; line-height: 58px; cursor: pointer; background-color: rgb(224, 18, 34);}
+</style>
+<body>
+    <div class="article"></div>
+    <div class="img" style="text-align: center;"></div>
+
+<script src="./jquery.js"></script>
+<script>
+    
+    $(function(){
+        //获取用户信息
+        let user_name = localStorage.getItem("username")
+        let user_id = localStorage.getItem("userid")
+        if(user_name){
+            $("body").prepend(`<h1><a>${user_name}</a></h1>`)
+        }else{
+            $("body").prepend(`<h1><a>请登录</a></h1>`)
+        }
+
+        //商品信息加载
+        $(".img").html(`<img src="./img/loading.gif">`)
+        $.get("./php/index.php",{},res =>{
+            console.log(res)
+            let html = ``
+            $.each(res.data,(index,item) =>{
+                html = ``
+                html = `<div class="goods">
+                            <div class="content">
+                                <img src="${item.goods_img}">
+                                <p>${item.goods_title}</p>
+                            </div>
+                            <div class="buy">
+                                <div>
+                                    <div>
+                                        <span class="price1">￥${item.goods_price_small}</span>
+                                        <span class="price2">￥${item.goods_price}</span>
+                                    </div>
+                                    <div>
+                                        <span class="o1">50.00%</span>
+                                        <span class="o2">
+                                            <span style="width: 50%;"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div id="${item.id}" class="addCart">立即抢购</div>
+                            </div>
+                        </div>`
+                $(".article").append(html)
+                $(".img").html("")
+            })
+        },"json")
+
+        //商品加入购物车事件
+        $(".article").on("click",".addCart",function(){
+            let goods_id = $(this).attr("id")
+            $.get("./php/indexadd.php",{goods_id,user_id},res=>{
+                if(res.meta.status == 201){
+                    let rs = confirm("已添加商品,是否进入购物车?")
+                    if(rs) location.href = "./cart.html"
+                }else{
+                    alert(res.meta.msg)
+                } 
+            },"json")
+        })
+
+        //点击登录事件
+        $("body").on("click","h1 a",function(){
+            if($(this).html() == "请登录"){
+                location.href = "./login.html"
+            }else{
+                location.href = "./cart.html"
+            }
+        })
+    })
+</script>
+</body>
+</html>
